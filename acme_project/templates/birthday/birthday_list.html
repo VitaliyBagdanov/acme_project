@@ -3,14 +3,15 @@
 {% block content %}
   {% for birthday in page_obj %}
     <div class="row"> 
-        <div class="col-2">  
-          {% if birthday.image %}
-            <img src="{{ birthday.image.url }}" height="100">
-          {% endif %}
-        </div>
+      <div class="col-2">  
+        {% if birthday.image %}
+          <img src="{{ birthday.image.url }}" height="100">
+        {% endif %}
+      </div>
       <div class="col-10"> 
         <div>
-          {{ birthday.first_name }} {{ birthday.last_name }} - {{ birthday.birthday }}
+          {{ birthday.first_name }} {{ birthday.last_name }} - {{ birthday.birthday }}<br>
+          <a href="{% url 'birthday:detail' birthday.id %}">Сколько до дня рождения?</a>
         </div>
         <div>
           <a href="{% url 'birthday:edit' birthday.id %}">Изменить запись</a> |

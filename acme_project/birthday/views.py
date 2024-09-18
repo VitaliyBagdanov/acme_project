@@ -1,7 +1,9 @@
-from django.shortcuts import render, get_object_or_404, redirect
+# from django.shortcuts import render, get_object_or_404, redirect
 # from django.core.paginator import Paginator
-from django.views.generic import ListView, CreateView
-from django.urls import reverse_lazy
+from django.views.generic import (
+    ListView, CreateView, UpdateView, DeleteView, DetailView
+)
+# from django.urls import reverse_lazy
 from .forms import BirthdayForm
 from .utils import calculate_birthday_countdown
 from .models import Birthday
@@ -26,45 +28,21 @@ from .models import Birthday
 #         context.update({'birthday_countdown': birthday_countdown})
 
 #     return render(request, 'birthday/birthday.html', context)
-
-class BirthdayCreateView(CreateView):
-    # Указываем модель, с которой работает CBV...
+class BirthdayMixin:
     model = Birthday
-    # Этот класс сам может создать форму на основе модели!
-    # Нет необходимости отдельно создавать форму через ModelForm.
-    # Указываем поля, которые должны быть в форме:
+
+
+class BirthdayCreateView(BirthdayMixin, CreateView):
     form_class = BirthdayForm
-    # Явным образом указываем шаблон:
-    template_name = 'birthday/birthday.html'
-    # Указываем namespace:name страницы, куда будет перенаправлен пользователь
-    # после создания объекта:
-    success_url = reverse_lazy('birthday:list') 
 
 
-def delete_birthday(request, pk):
-    # Получаем объект модели или выбрасываем 404 ошибку.
-    instance = get_object_or_404(Birthday, pk=pk)
-    # В форму передаём только объект модели;
-    # передавать в форму параметры запроса не нужно.
-    form = BirthdayForm(instance=instance)
-    context = {'form': form}
-    # Если был получен POST-запрос...
-    if request.method == 'POST':
-        # ...удаляем объект:
-        instance.delete()
-        # ...и переадресовываем пользователя на страницу со списком записей.
-        return redirect('birthday:list')
-    # Если был получен GET-запрос — отображаем форму.
-    return render(request, 'birthday/birthday.html', context)
+class BirthdayUpdateView(BirthdayMixin, UpdateView):
+    form_class = BirthdayForm
 
 
-# def birthday_list(request):
-#     birthdays = Birthday.objects.order_by('id')
-#     paginator = Paginator(birthdays, 10)
-#     page_number = request.GET.get('page')
-#     page_obj = paginator.get_page(page_number)
-#     context = {'page_obj': page_obj}
-#     return render(request, 'birthday/birthday_list.html', context)
+class BirthdayDeleteView(BirthdayMixin, DeleteView):
+    pass
+
 
 class BirthdayListView(ListView):
     # Указываем модель, с которой работает CBV...
@@ -73,3 +51,18 @@ class BirthdayListView(ListView):
     ordering = 'id'
     # ...и даже настройки пагинации:
     paginate_by = 10
+
+
+class BirthdayDetailView(DetailView):
+    model = Birthday
+
+    def get_context_data(self, **kwargs):
+        # Получаем словарь контекста:
+        context = super().get_context_data(**kwargs)
+        # Добавляем в словарь новый ключ:
+        context['birthday_countdown'] = calculate_birthday_countdown(
+            # Дату рождения берём из объекта в словаре context:
+            self.object.birthday
+        )
+        # Возвращаем словарь контекста.
+        return context
